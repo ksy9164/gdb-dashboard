@@ -1243,217 +1243,217 @@ location, if available. Optionally list the frame arguments and locals too."""
             }
         }
 
-class History(Dashboard.Module):
-    """List the last entries of the value history."""
+#  class History(Dashboard.Module):
+#      """List the last entries of the value history."""
+#
+#      def label(self):
+#          return 'History'
+#
+#      def lines(self, term_width, style_changed):
+#          out = []
+#          # fetch last entries
+#          for i in range(-self.limit + 1, 1):
+#              try:
+#                  value = format_value(gdb.history(i))
+#                  value_id = ansi('$${}', R.style_low).format(abs(i))
+#                  line = '{} = {}'.format(value_id, value)
+#                  out.append(line)
+#              except gdb.error:
+#                  continue
+#          return out
+#
+#      def attributes(self):
+#          return {
+#              'limit': {
+#                  'doc': 'Maximum number of values to show.',
+#                  'default': 3,
+#                  'type': int,
+#                  'check': check_gt_zero
+#              }
+#          }
+#
+#  class Memory(Dashboard.Module):
+#      """Allow to inspect memory regions."""
+#
+#      @staticmethod
+#      def format_byte(byte):
+#          # `type(byte) is bytes` in Python 3
+#          if byte.isspace():
+#              return ' '
+#          elif 0x20 < ord(byte) < 0x7e:
+#              return chr(ord(byte))
+#          else:
+#              return '.'
+#
+#      @staticmethod
+#      def parse_as_address(expression):
+#          value = gdb.parse_and_eval(expression)
+#          return to_unsigned(value)
+#
+#      def __init__(self):
+#          self.row_length = 16
+#          self.table = {}
+#
+#      def format_memory(self, start, memory):
+#          out = []
+#          for i in range(0, len(memory), self.row_length):
+#              region = memory[i:i + self.row_length]
+#              pad = self.row_length - len(region)
+#              address = format_address(start + i)
+#              hexa = (' '.join('{:02x}'.format(ord(byte)) for byte in region))
+#              text = (''.join(Memory.format_byte(byte) for byte in region))
+#              out.append('{} {}{} {}{}'.format(ansi(address, R.style_low),
+#                                               hexa,
+#                                               ansi(pad * ' --', R.style_low),
+#                                               ansi(text, R.style_high),
+#                                               ansi(pad * '.', R.style_low)))
+#          return out
+#
+#      def label(self):
+#          return 'Memory'
+#
+#      def lines(self, term_width, style_changed):
+#          out = []
+#          inferior = gdb.selected_inferior()
+#          for address, length in sorted(self.table.items()):
+#              try:
+#                  memory = inferior.read_memory(address, length)
+#                  out.extend(self.format_memory(address, memory))
+#              except gdb.error:
+#                  msg = 'Cannot access {} bytes starting at {}'
+#                  msg = msg.format(length, format_address(address))
+#                  out.append(ansi(msg, R.style_error))
+#              out.append(divider(term_width))
+#          # drop last divider
+#          if out:
+#              del out[-1]
+#          return out
+#
+#      def watch(self, arg):
+#          if arg:
+#              address, _, length = arg.partition(' ')
+#              address = Memory.parse_as_address(address)
+#              if length:
+#                  length = Memory.parse_as_address(length)
+#              else:
+#                  length = self.row_length
+#              self.table[address] = length
+#          else:
+#              raise Exception('Specify an address')
+#
+#      def unwatch(self, arg):
+#          if arg:
+#              try:
+#                  del self.table[Memory.parse_as_address(arg)]
+#              except KeyError:
+#                  raise Exception('Memory region not watched')
+#          else:
+#              raise Exception('Specify an address')
+#
+#      def clear(self, arg):
+#          self.table.clear()
+#
+#      def commands(self):
+#          return {
+#              'watch': {
+#                  'action': self.watch,
+#                  'doc': 'Watch a memory region by address and length.\n'
+#                         'The length defaults to 16 byte.',
+#                  'complete': gdb.COMPLETE_EXPRESSION
+#              },
+#              'unwatch': {
+#                  'action': self.unwatch,
+#                  'doc': 'Stop watching a memory region by address.',
+#                  'complete': gdb.COMPLETE_EXPRESSION
+#              },
+#              'clear': {
+#                  'action': self.clear,
+#                  'doc': 'Clear all the watched regions.'
+#              }
+#          }
 
-    def label(self):
-        return 'History'
-
-    def lines(self, term_width, style_changed):
-        out = []
-        # fetch last entries
-        for i in range(-self.limit + 1, 1):
-            try:
-                value = format_value(gdb.history(i))
-                value_id = ansi('$${}', R.style_low).format(abs(i))
-                line = '{} = {}'.format(value_id, value)
-                out.append(line)
-            except gdb.error:
-                continue
-        return out
-
-    def attributes(self):
-        return {
-            'limit': {
-                'doc': 'Maximum number of values to show.',
-                'default': 3,
-                'type': int,
-                'check': check_gt_zero
-            }
-        }
-
-class Memory(Dashboard.Module):
-    """Allow to inspect memory regions."""
-
-    @staticmethod
-    def format_byte(byte):
-        # `type(byte) is bytes` in Python 3
-        if byte.isspace():
-            return ' '
-        elif 0x20 < ord(byte) < 0x7e:
-            return chr(ord(byte))
-        else:
-            return '.'
-
-    @staticmethod
-    def parse_as_address(expression):
-        value = gdb.parse_and_eval(expression)
-        return to_unsigned(value)
-
-    def __init__(self):
-        self.row_length = 16
-        self.table = {}
-
-    def format_memory(self, start, memory):
-        out = []
-        for i in range(0, len(memory), self.row_length):
-            region = memory[i:i + self.row_length]
-            pad = self.row_length - len(region)
-            address = format_address(start + i)
-            hexa = (' '.join('{:02x}'.format(ord(byte)) for byte in region))
-            text = (''.join(Memory.format_byte(byte) for byte in region))
-            out.append('{} {}{} {}{}'.format(ansi(address, R.style_low),
-                                             hexa,
-                                             ansi(pad * ' --', R.style_low),
-                                             ansi(text, R.style_high),
-                                             ansi(pad * '.', R.style_low)))
-        return out
-
-    def label(self):
-        return 'Memory'
-
-    def lines(self, term_width, style_changed):
-        out = []
-        inferior = gdb.selected_inferior()
-        for address, length in sorted(self.table.items()):
-            try:
-                memory = inferior.read_memory(address, length)
-                out.extend(self.format_memory(address, memory))
-            except gdb.error:
-                msg = 'Cannot access {} bytes starting at {}'
-                msg = msg.format(length, format_address(address))
-                out.append(ansi(msg, R.style_error))
-            out.append(divider(term_width))
-        # drop last divider
-        if out:
-            del out[-1]
-        return out
-
-    def watch(self, arg):
-        if arg:
-            address, _, length = arg.partition(' ')
-            address = Memory.parse_as_address(address)
-            if length:
-                length = Memory.parse_as_address(length)
-            else:
-                length = self.row_length
-            self.table[address] = length
-        else:
-            raise Exception('Specify an address')
-
-    def unwatch(self, arg):
-        if arg:
-            try:
-                del self.table[Memory.parse_as_address(arg)]
-            except KeyError:
-                raise Exception('Memory region not watched')
-        else:
-            raise Exception('Specify an address')
-
-    def clear(self, arg):
-        self.table.clear()
-
-    def commands(self):
-        return {
-            'watch': {
-                'action': self.watch,
-                'doc': 'Watch a memory region by address and length.\n'
-                       'The length defaults to 16 byte.',
-                'complete': gdb.COMPLETE_EXPRESSION
-            },
-            'unwatch': {
-                'action': self.unwatch,
-                'doc': 'Stop watching a memory region by address.',
-                'complete': gdb.COMPLETE_EXPRESSION
-            },
-            'clear': {
-                'action': self.clear,
-                'doc': 'Clear all the watched regions.'
-            }
-        }
-
-class Registers(Dashboard.Module):
-    """Show the CPU registers and their values."""
-
-    def __init__(self):
-        self.table = {}
-
-    def label(self):
-        return 'Registers'
-
-    def lines(self, term_width, style_changed):
-        # skip if the current thread is not stopped
-        if not gdb.selected_thread().is_stopped():
-            return []
-        # fetch registers status
-        registers = []
-        for reg_info in run('info registers').strip().split('\n'):
-            # fetch register and update the table
-            name = reg_info.split(None, 1)[0]
-            # Exclude registers with a dot '.' or parse_and_eval() will fail
-            if '.' in name:
-                continue
-            value = gdb.parse_and_eval('${}'.format(name))
-            string_value = Registers.format_value(value)
-            changed = self.table and (self.table.get(name, '') != string_value)
-            self.table[name] = string_value
-            registers.append((name, string_value, changed))
-        # split registers in rows and columns, each column is composed of name,
-        # space, value and another trailing space which is skipped in the last
-        # column (hence term_width + 1)
-        max_name = max(len(name) for name, _, _ in registers)
-        max_value = max(len(value) for _, value, _ in registers)
-        max_width = max_name + max_value + 2
-        per_line = int((term_width + 1) / max_width) or 1
-        # redistribute extra space among columns
-        extra = int((term_width + 1 - max_width * per_line) / per_line)
-        if per_line == 1:
-            # center when there is only one column
-            max_name += int(extra / 2)
-            max_value += int(extra / 2)
-        else:
-            max_value += extra
-        # format registers info
-        partial = []
-        for name, value, changed in registers:
-            styled_name = ansi(name.rjust(max_name), R.style_low)
-            value_style = R.style_selected_1 if changed else ''
-            styled_value = ansi(value.ljust(max_value), value_style)
-            partial.append(styled_name + ' ' + styled_value)
-        out = []
-        if self.column_major:
-            num_lines = int(math.ceil(float(len(partial)) / per_line))
-            for i in range(num_lines):
-                line = ' '.join(partial[i:len(partial):num_lines]).rstrip()
-                real_n_col = math.ceil(float(len(partial)) / num_lines)
-                line = ' ' * int((per_line - real_n_col) * max_width / 2) + line
-                out.append(line)
-        else:
-            for i in range(0, len(partial), per_line):
-                out.append(' '.join(partial[i:i + per_line]).rstrip())
-        return out
-
-    def attributes(self):
-        return {
-            'column-major': {
-                'doc': 'Whether to show registers in columns instead of rows.',
-                'default': False,
-                'name': 'column_major',
-                'type': bool
-            }
-        }
-
-    @staticmethod
-    def format_value(value):
-        try:
-            if value.type.code in [gdb.TYPE_CODE_INT, gdb.TYPE_CODE_PTR]:
-                int_value = to_unsigned(value, value.type.sizeof)
-                value_format = '0x{{:0{}x}}'.format(2 * value.type.sizeof)
-                return value_format.format(int_value)
-        except (gdb.error, ValueError):
-            # convert to unsigned but preserve code and flags information
-            pass
-        return str(value)
+#  class Registers(Dashboard.Module):
+#      """Show the CPU registers and their values."""
+#
+#      def __init__(self):
+#          self.table = {}
+#
+#      def label(self):
+#          return 'Registers'
+#
+#      def lines(self, term_width, style_changed):
+#          # skip if the current thread is not stopped
+#          if not gdb.selected_thread().is_stopped():
+#              return []
+#          # fetch registers status
+#          registers = []
+#          for reg_info in run('info registers').strip().split('\n'):
+#              # fetch register and update the table
+#              name = reg_info.split(None, 1)[0]
+#              # Exclude registers with a dot '.' or parse_and_eval() will fail
+#              if '.' in name:
+#                  continue
+#              value = gdb.parse_and_eval('${}'.format(name))
+#              string_value = Registers.format_value(value)
+#              changed = self.table and (self.table.get(name, '') != string_value)
+#              self.table[name] = string_value
+#              registers.append((name, string_value, changed))
+#          # split registers in rows and columns, each column is composed of name,
+#          # space, value and another trailing space which is skipped in the last
+#          # column (hence term_width + 1)
+#          max_name = max(len(name) for name, _, _ in registers)
+#          max_value = max(len(value) for _, value, _ in registers)
+#          max_width = max_name + max_value + 2
+#          per_line = int((term_width + 1) / max_width) or 1
+#          # redistribute extra space among columns
+#          extra = int((term_width + 1 - max_width * per_line) / per_line)
+#          if per_line == 1:
+#              # center when there is only one column
+#              max_name += int(extra / 2)
+#              max_value += int(extra / 2)
+#          else:
+#              max_value += extra
+#          # format registers info
+#          partial = []
+#          for name, value, changed in registers:
+#              styled_name = ansi(name.rjust(max_name), R.style_low)
+#              value_style = R.style_selected_1 if changed else ''
+#              styled_value = ansi(value.ljust(max_value), value_style)
+#              partial.append(styled_name + ' ' + styled_value)
+#          out = []
+#          if self.column_major:
+#              num_lines = int(math.ceil(float(len(partial)) / per_line))
+#              for i in range(num_lines):
+#                  line = ' '.join(partial[i:len(partial):num_lines]).rstrip()
+#                  real_n_col = math.ceil(float(len(partial)) / num_lines)
+#                  line = ' ' * int((per_line - real_n_col) * max_width / 2) + line
+#                  out.append(line)
+#          else:
+#              for i in range(0, len(partial), per_line):
+#                  out.append(' '.join(partial[i:i + per_line]).rstrip())
+#          return out
+#
+#      def attributes(self):
+#          return {
+#              'column-major': {
+#                  'doc': 'Whether to show registers in columns instead of rows.',
+#                  'default': False,
+#                  'name': 'column_major',
+#                  'type': bool
+#              }
+#          }
+#
+#      @staticmethod
+#      def format_value(value):
+#          try:
+#              if value.type.code in [gdb.TYPE_CODE_INT, gdb.TYPE_CODE_PTR]:
+#                  int_value = to_unsigned(value, value.type.sizeof)
+#                  value_format = '0x{{:0{}x}}'.format(2 * value.type.sizeof)
+#                  return value_format.format(int_value)
+#          except (gdb.error, ValueError):
+#              # convert to unsigned but preserve code and flags information
+#              pass
+#          return str(value)
 
 class Threads(Dashboard.Module):
     """List the currently available threads."""
@@ -1503,64 +1503,64 @@ class Threads(Dashboard.Module):
             }
         }
 
-class Expressions(Dashboard.Module):
-    """Watch user expressions."""
-
-    def __init__(self):
-        self.number = 1
-        self.table = {}
-
-    def label(self):
-        return 'Expressions'
-
-    def lines(self, term_width, style_changed):
-        out = []
-        for number, expression in sorted(self.table.items()):
-            try:
-                value = format_value(gdb.parse_and_eval(expression))
-            except gdb.error as e:
-                value = ansi(e, R.style_error)
-            number = ansi(number, R.style_selected_2)
-            expression = ansi(expression, R.style_low)
-            out.append('[{}] {} = {}'.format(number, expression, value))
-        return out
-
-    def watch(self, arg):
-        if arg:
-            self.table[self.number] = arg
-            self.number += 1
-        else:
-            raise Exception('Specify an expression')
-
-    def unwatch(self, arg):
-        if arg:
-            try:
-                del self.table[int(arg)]
-            except:
-                raise Exception('Expression not watched')
-        else:
-            raise Exception('Specify an identifier')
-
-    def clear(self, arg):
-        self.table.clear()
-
-    def commands(self):
-        return {
-            'watch': {
-                'action': self.watch,
-                'doc': 'Watch an expression.',
-                'complete': gdb.COMPLETE_EXPRESSION
-            },
-            'unwatch': {
-                'action': self.unwatch,
-                'doc': 'Stop watching an expression by id.',
-                'complete': gdb.COMPLETE_EXPRESSION
-            },
-            'clear': {
-                'action': self.clear,
-                'doc': 'Clear all the watched expressions.'
-            }
-        }
+#  class Expressions(Dashboard.Module):
+#      """Watch user expressions."""
+#
+#      def __init__(self):
+#          self.number = 1
+#          self.table = {}
+#
+#      def label(self):
+#          return 'Expressions'
+#
+#      def lines(self, term_width, style_changed):
+#          out = []
+#          for number, expression in sorted(self.table.items()):
+#              try:
+#                  value = format_value(gdb.parse_and_eval(expression))
+#              except gdb.error as e:
+#                  value = ansi(e, R.style_error)
+#              number = ansi(number, R.style_selected_2)
+#              expression = ansi(expression, R.style_low)
+#              out.append('[{}] {} = {}'.format(number, expression, value))
+#          return out
+#
+#      def watch(self, arg):
+#          if arg:
+#              self.table[self.number] = arg
+#              self.number += 1
+#          else:
+#              raise Exception('Specify an expression')
+#
+#      def unwatch(self, arg):
+#          if arg:
+#              try:
+#                  del self.table[int(arg)]
+#              except:
+#                  raise Exception('Expression not watched')
+#          else:
+#              raise Exception('Specify an identifier')
+#
+#      def clear(self, arg):
+#          self.table.clear()
+#
+#      def commands(self):
+#          return {
+#              'watch': {
+#                  'action': self.watch,
+#                  'doc': 'Watch an expression.',
+#                  'complete': gdb.COMPLETE_EXPRESSION
+#              },
+#              'unwatch': {
+#                  'action': self.unwatch,
+#                  'doc': 'Stop watching an expression by id.',
+#                  'complete': gdb.COMPLETE_EXPRESSION
+#              },
+#              'clear': {
+#                  'action': self.clear,
+#                  'doc': 'Clear all the watched expressions.'
+#              }
+#          }
 
 # XXX traceback line numbers in this Python block must be increased by 1
 end
@@ -1603,3 +1603,5 @@ python Dashboard.start()
 # Local Variables:
 # mode: python
 # End:
+
+source lange.txt
